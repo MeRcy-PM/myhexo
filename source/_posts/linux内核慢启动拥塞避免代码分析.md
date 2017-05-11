@@ -41,7 +41,7 @@ tcp的拥塞主要是基于定时器(RTO)和ack的，因此主要处理函数都
 
 整体入口如下：
 
-```
+```cpp
 // 当ack时一个可疑的ack，如sack，或者路由发送的显示拥塞控制，或者当前拥塞状态不是正常状态时。
 if (tcp_ack_is_dubious(sk, flag)) {
 	/* Advance CWND, if state allows this. */
@@ -66,7 +66,7 @@ tcp reno注册到拥塞控制框架中的是tcp\_reno\_cong\_avoid函数。
 
 其代码较为简单，只是其中多了一部分tcp-abc的拥塞避免算法，其慢启动实现在tcp\_slow\_start中，可以参考\[[rfc-3465][3]\]\[[tcp_abc][2]\]。大体是用已经确认的byte大小来作为拥塞控制的计算，在慢启动阶段会更加激进，但是可能会带来更大的burst。
 
-```
+```cpp
 /*
  * TCP Reno congestion control
  * This is special case used for fallback as well.
@@ -111,7 +111,7 @@ void tcp_reno_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
 
 刚开始看代码时对下面那个循环并不是很理解，不理解为什么++是指数增长，直到放到整个调用栈上看，其具体流程如代码注释中所写，为指数增长的过程。
 
-```
+```cpp
 /*
  * Slow start is used when congestion window is less than slow start
  * threshold. This version implements the basic RFC2581 version
@@ -199,7 +199,7 @@ void tcp_slow_start(struct tcp_sock *tp)
 ## 2.4 拥塞避免
 拥塞避免的代码比较简短，注意2.3中所写的，snd\_cwnd\_cnt为线性增长器，其单位为1 / w。在reno调用中，这里的w也为snd\_cwnd窗口大小。即每一个ack只增加1 / snd_\cwnd大小的窗口。
 
-```
+```cpp
 /* In theory this is tp->snd_cwnd += 1 / tp->snd_cwnd (or alternative w) */
 void tcp_cong_avoid_ai(struct tcp_sock *tp, u32 w)
 {
@@ -218,7 +218,7 @@ void tcp_cong_avoid_ai(struct tcp_sock *tp, u32 w)
 对tcp\_slow\_start的改动不算是4.9的，早在3.18之前就已经改变了，使用的已经不是之前的snd\_cwnd\_cnt，而是采用tcp-abc算法来进行慢启动。
 
 慢启动仍然使用类似tcp-abc的实现机制，不过其并不以byte作为单位，而是以MSS作为单位进行处理。
-```
+```cpp
 /* Slow start is used when congestion window is no greater than the slow start
  * threshold. We base on RFC2581 and also handle stretch ACKs properly.
  * We do not implement RFC3465 Appropriate Byte Counting (ABC) per se but
@@ -246,7 +246,7 @@ u32 tcp_slow_start(struct tcp_sock *tp, u32 acked)
 
 拥塞避免上和老版本类似，也使用到了线性增长器，但是涨幅比之前版本较大，并不是以1为计数，而是以acked，即已经确认的MSS个数据片作为单位。
 
-```
+```cpp
 /* In theory this is tp->snd_cwnd += 1 / tp->snd_cwnd (or alternative w),
  * for every packet that was ACKed.
  */

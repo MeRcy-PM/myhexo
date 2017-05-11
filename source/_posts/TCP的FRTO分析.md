@@ -120,7 +120,7 @@ FRTO主要是用来处理在DSACK生效时，突发的延迟触发RTO超时后�
 # 2. 4.9.4中的代码
 这里主要分析tcp\_process\_loss函数。
 
-```
+```cpp
 /* Process an ACK in CA_Loss state. Move to CA_Open if lost data are
  * recovered or spurious. Otherwise retransmits more on partial ACKs.
  */
