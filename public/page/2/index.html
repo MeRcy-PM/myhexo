@@ -6,11 +6,11 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives: 2017 | 近卫高地</title>
+  <title>近卫高地</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta property="og:type" content="website">
 <meta property="og:title" content="近卫高地">
-<meta property="og:url" content="http://yoursite.com/archives/2017/index.html">
+<meta property="og:url" content="http://yoursite.com/page/2/index.html">
 <meta property="og:site_name" content="近卫高地">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="近卫高地">
@@ -155,439 +155,79 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-九层妖塔" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/03/19/九层妖塔/">九层妖塔</a>
+    </h1>
+  
+
+        
+        <a href="/2017/03/19/九层妖塔/" class="archive-article-date">
+  	<time datetime="2017-03-19T11:18:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-19</time>
+</a>
+        
+      </header>
     
-    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="3只精灵龙的其他故事"><a href="#3只精灵龙的其他故事" class="headerlink" title="3只精灵龙的其他故事"></a>3只精灵龙的其他故事</h1><p><a href="https://algebra84.github.io/2017/03/19/threedragon/" target="_blank" rel="external">涛哥分析的好有道理</a><br><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/法师奥秘.jpg" alt=""><br><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/骑士奥秘.jpg" alt=""><br>下一期涛哥应该要带来猜奥秘的模型了吧！</p>
+<p>以下代码待验证。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vector&gt;</span></span></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="keyword">class</span> tree &#123;</div><div class="line">  <span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">build_tree</span> <span class="params">(<span class="keyword">int</span> dragon, <span class="keyword">int</span> damage)</span> </span>&#123;</div><div class="line">      <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; in; </div><div class="line">      in.push_back (<span class="number">30</span>);</div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; dragon + <span class="number">1</span>; i++) &#123;</div><div class="line">        in.push_back (<span class="number">2</span>);</div><div class="line">      &#125;   </div><div class="line">      build_tree_1 (in, damage, <span class="number">1.0</span>);</div><div class="line">    &#125;   </div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">result_match</span> <span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;in)</span> </span>&#123;</div><div class="line">      <span class="keyword">int</span> cnt = <span class="number">0</span>;</div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; in.size (); i++)</div><div class="line">        <span class="keyword">if</span> (in[i] != <span class="number">0</span>)</div><div class="line">          cnt++;</div><div class="line">      <span class="keyword">return</span> cnt == alive;</div><div class="line">    &#125;   </div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">build_tree_1</span> <span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;in, <span class="keyword">int</span> damage, <span class="keyword">float</span> p)</span> </span>&#123;</div><div class="line">      <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line">      <span class="keyword">float</span> new_p = <span class="number">0.0</span>;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> DEBUG</span></div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; in.size (); i++)</div><div class="line">        <span class="built_in">cout</span> &lt;&lt; in[i] &lt;&lt; <span class="string">","</span>;</div><div class="line"></div><div class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">"Prob "</span> &lt;&lt; p &lt;&lt; <span class="string">" else damage "</span> &lt;&lt; damage &lt;&lt; <span class="built_in">endl</span>;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"></div><div class="line">      <span class="keyword">if</span> (damage == <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">if</span> (result_match (in))</div><div class="line">          result += p;</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">      &#125;   </div><div class="line"></div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; in.size (); i++) &#123;</div><div class="line">        <span class="keyword">if</span> (in[i] != <span class="number">0</span>)</div><div class="line">          count++;</div><div class="line">      &#125;</div><div class="line"></div><div class="line">      <span class="keyword">if</span> (count == <span class="number">0</span>)</div><div class="line">        <span class="keyword">return</span>;</div><div class="line"></div><div class="line">      new_p = p / count;</div><div class="line">      count = <span class="number">0</span>;</div><div class="line"></div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; in.size (); i++) &#123;</div><div class="line">        <span class="comment">/* A dead dragon.  */</span></div><div class="line">        <span class="keyword">if</span> (in[i] == <span class="number">0</span>)</div><div class="line">          <span class="keyword">continue</span>;</div><div class="line"></div><div class="line">        in[i]--;</div><div class="line">        build_tree_1 (in, damage - <span class="number">1</span>, new_p);</div><div class="line">        in[i]++;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    tree (<span class="keyword">int</span> dragon, <span class="keyword">int</span> damage, <span class="keyword">int</span> _alive) : alive (_alive) &#123;</div><div class="line">      result = <span class="number">0.0</span>;</div><div class="line">      build_tree (dragon, damage);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">float</span> <span class="title">get_result</span> <span class="params">()</span> </span>&#123;</div><div class="line">      <span class="keyword">return</span> result;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    ~tree () &#123;</div><div class="line">    &#125;</div><div class="line">  <span class="keyword">private</span>:</div><div class="line">    <span class="keyword">int</span> alive;</div><div class="line">    <span class="keyword">float</span> result;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span> <span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">  <span class="function">tree <span class="title">t</span> <span class="params">(<span class="number">3</span>, <span class="number">8</span>, <span class="number">1</span>)</span></span>;</div><div class="line">  <span class="built_in">cout</span> &lt;&lt; t.get_result () &lt;&lt; <span class="built_in">endl</span>;</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2017" class="archive-year">2017</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:36:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块/">Webrtc delay-base-bwe代码分析(4): OveruseDetector模块</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">涛哥说的都怼</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">fun</a>
         		</li>
       		
 		</ul>
 	</div>
 
-          
+      
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2017/03/19/九层妖塔/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:32:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/">Webrtc delay-base-bwe代码分析(3): OveruseEstimator模块</a>
-    </h1>
-  
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
 
-          
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-2-InterArrival模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:28:31.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-2-InterArrival模块/">Webrtc delay-base-bwe代码分析(2): InterArrival模块</a>
-    </h1>
-  
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
 
-          
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:18:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/">Webrtc delay-base-bwe代码分析(1): RateStatistics模块</a>
-    </h1>
-  
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
+<span id="busuanzi_container_page_pv">
+   本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+</span>
 
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/09/webrtc中rtcp码率控制分析/" class="archive-article-date">
-  	<time datetime="2017-05-09T03:22:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/09/webrtc中rtcp码率控制分析/">webrtc中rtcp码率控制分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">webrt</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/04/11/TCP的FRTO分析/" class="archive-article-date">
-  	<time datetime="2017-04-11T11:04:12.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-04-11</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/04/11/TCP的FRTO分析/">TCP的FRTO分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/04/06/hello-world/" class="archive-article-date">
-  	<time datetime="2017-04-06T13:56:41.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-04-06</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/04/06/hello-world/">小怼的世界</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/04/02/QUIC翻译/" class="archive-article-date">
-  	<time datetime="2017-04-02T02:57:50.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-04-02</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/04/02/QUIC翻译/">QUIC翻译</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">QUIC</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">传输协议</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/03/27/linux内核慢启动拥塞避免代码分析/" class="archive-article-date">
-  	<time datetime="2017-03-27T02:27:29.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-27</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/03/27/linux内核慢启动拥塞避免代码分析/">linux内核慢启动拥塞避免代码分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/03/19/TCP简介-读书笔记/" class="archive-article-date">
-  	<time datetime="2017-03-19T12:00:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-19</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/03/19/TCP简介-读书笔记/">TCP简介-读书笔记</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">读书笔记</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
   
-    </div></section>
-  
-
-    
     <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/archives/2017/page/2/">2</a><a class="extend next" rel="next" href="/archives/2017/page/2/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
     </nav>
   
 
@@ -616,9 +256,9 @@
     <script>
 	var yiliaConfig = {
 		mathjax: false,
-		isHome: false,
+		isHome: true,
 		isPost: false,
-		isArchive: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

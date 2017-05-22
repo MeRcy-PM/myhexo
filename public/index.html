@@ -155,6 +155,86 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块/">Webrtc delay-base-bwe代码分析(4): OveruseDetector模块</a>
+    </h1>
+  
+
+        
+        <a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块/" class="archive-article-date">
+  	<time datetime="2017-05-22T11:36:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="0-简介"><a href="#0-简介" class="headerlink" title="0. 简介"></a>0. 简介</h1><p>这个模块主要是根据OveruseEstimator模块校正后的到达时间差来对链路使用状态进行评估，为有限自动状态机提供状态转换的条件，同时本模块还有GCC文档中提到的自适应阈值计算。</p>
+<p><a href="http://c3lab.poliba.it/images/6/65/Gcc-analysis.pdf" target="_blank" rel="external">阈值自适应原因如下</a>：<br>个人理解：</p>
+<ul>
+<li>防止某些网络状态比较极端，使链路评估总是处于比较极端的情况。</li>
+<li>由于基于RTT算法的公平性问题，在对抗基于丢包的拥塞控制算法衰减快，容易造成自身饿死，例如除了GCC外还有一条TCP流。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">We show that the threshold (ti), used by the over-use detector, must be made adaptive otherwise two issues can occur: 1) the delay-based control action may have no effect when the size of the bottleneck queue along the path is not sufficiently large and 2) the GCC flow may be starved by a concurrent loss-based TCP flow.</div></pre></td></tr></table></figure>
+<h1 id="1-原理"><a href="#1-原理" class="headerlink" title="1. 原理"></a>1. 原理</h1><p><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/Adaptive_threshold_formula.png" alt=""><br><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/Adaptive_threshold_formula_2.png" alt=""></p>
+<p>公式如上，delta_T为到达时间差，k为增益系数，m(ti)为ti时刻的延迟。<br>增益系数是自适应的，当本次延迟值在上一轮迭代的阈值范围内时，增益系数k会进行衰减，其他时候增益系数k将会增加。<br>参数选择是一个可以调优的过程，这里暂不讨论，webrtc中也开辟了对应的实验性接口可供配置。</p>
+<h1 id="2-代码"><a href="#2-代码" class="headerlink" title="2. 代码"></a>2. 代码</h1><p>代码实现比较简单明了，基本就是按照上述公式进行实现：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div></pre></td><td class="code"><pre><div class="line">BandwidthUsage OveruseDetector::Detect(<span class="keyword">double</span> offset,</div><div class="line">                                       <span class="keyword">double</span> ts_delta,</div><div class="line">                                       <span class="keyword">int</span> num_of_deltas,</div><div class="line">                                       <span class="keyword">int64_t</span> now_ms) &#123;</div><div class="line">  <span class="keyword">if</span> (num_of_deltas &lt; <span class="number">2</span>) &#123;</div><div class="line">    <span class="keyword">return</span> kBwNormal;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> prev_offset = prev_offset_;</div><div class="line">  prev_offset_ = offset;</div><div class="line">  <span class="comment">// 更新delta T.</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> T = <span class="built_in">std</span>::min(num_of_deltas, <span class="number">60</span>) * offset;</div><div class="line">  BWE_TEST_LOGGING_PLOT(<span class="number">1</span>, <span class="string">"offset"</span>, now_ms, T);</div><div class="line">  BWE_TEST_LOGGING_PLOT(<span class="number">1</span>, <span class="string">"threshold"</span>, now_ms, threshold_);</div><div class="line">  <span class="keyword">if</span> (T &gt; threshold_) &#123;</div><div class="line">	<span class="comment">// 过载，更新对应的过载时间，过载次数统计。</span></div><div class="line">    <span class="keyword">if</span> (time_over_using_ == <span class="number">-1</span>) &#123;</div><div class="line">      <span class="comment">// Initialize the timer. Assume that we've been</span></div><div class="line">      <span class="comment">// over-using half of the time since the previous</span></div><div class="line">      <span class="comment">// sample.</span></div><div class="line">      time_over_using_ = ts_delta / <span class="number">2</span>;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      <span class="comment">// Increment timer</span></div><div class="line">      time_over_using_ += ts_delta;</div><div class="line">    &#125;</div><div class="line">    overuse_counter_++;</div><div class="line">	<span class="comment">// 当且仅当总过载时间超过过载时间阈值，且其曲线仍成上升趋势(offset &gt;= prev_offset)，</span></div><div class="line">	<span class="comment">// 进入过载状态</span></div><div class="line">	<span class="comment">// 其他场景维持原状态。</span></div><div class="line">	<span class="comment">// 判断具有一定容忍，防止因某些爆发式场景导致异常的过载判断影响网络吞吐量。</span></div><div class="line">	<span class="comment">// 过载状态解除只有T降低至阈值之下。</span></div><div class="line">    <span class="keyword">if</span> (time_over_using_ &gt; overusing_time_threshold_ &amp;&amp; overuse_counter_ &gt; <span class="number">1</span>) &#123;</div><div class="line">      <span class="keyword">if</span> (offset &gt;= prev_offset) &#123;</div><div class="line">        time_over_using_ = <span class="number">0</span>;</div><div class="line">        overuse_counter_ = <span class="number">0</span>;</div><div class="line">        hypothesis_ = kBwOverusing;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// 清除过载相关参数</span></div><div class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (T &lt; -threshold_) &#123;</div><div class="line">	<span class="comment">// 低负载</span></div><div class="line">    time_over_using_ = <span class="number">-1</span>;</div><div class="line">    overuse_counter_ = <span class="number">0</span>;</div><div class="line">    hypothesis_ = kBwUnderusing;</div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">	<span class="comment">// 正常状态</span></div><div class="line">    time_over_using_ = <span class="number">-1</span>;</div><div class="line">    overuse_counter_ = <span class="number">0</span>;</div><div class="line">    hypothesis_ = kBwNormal;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// 当过载发生时，T总是大于阈值，因此此时阈值增大。</span></div><div class="line">  <span class="comment">// 当未发生过载时，T总是小于阈值，此时阈值缩小。</span></div><div class="line">  UpdateThreshold(T, now_ms);</div><div class="line"></div><div class="line">  <span class="keyword">return</span> hypothesis_;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">void</span> OveruseDetector::UpdateThreshold(<span class="keyword">double</span> modified_offset, <span class="keyword">int64_t</span> now_ms) &#123;</div><div class="line">  <span class="comment">// 实验性质</span></div><div class="line">  <span class="keyword">if</span> (!in_experiment_)</div><div class="line">    <span class="keyword">return</span>;</div><div class="line"></div><div class="line">  <span class="comment">// 初始化</span></div><div class="line">  <span class="keyword">if</span> (last_update_ms_ == <span class="number">-1</span>)</div><div class="line">    last_update_ms_ = now_ms;</div><div class="line"></div><div class="line">  <span class="comment">// 修正值超过阈值可控制的最大范围，这里啥都不做，防止阈值过大。</span></div><div class="line">  <span class="keyword">if</span> (<span class="built_in">fabs</span>(modified_offset) &gt; threshold_ + kMaxAdaptOffsetMs) &#123;</div><div class="line">    <span class="comment">// Avoid adapting the threshold to big latency spikes, caused e.g.,</span></div><div class="line">    <span class="comment">// by a sudden capacity drop.</span></div><div class="line">    last_update_ms_ = now_ms;</div><div class="line">    <span class="keyword">return</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// 第二个公式，根据修正值的绝对值和当前阈值(即i - 1时刻)比较，计算增益系数</span></div><div class="line">  <span class="comment">// 默认k_down_ = 0.00006, k_up_ = 0.004。</span></div><div class="line">  <span class="comment">// 这里两个值虽然都是正的，</span></div><div class="line">  <span class="comment">// 但是增长和减小的符号在第一个式子中的fabs(modified_offset) - threshold_</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> k = <span class="built_in">fabs</span>(modified_offset) &lt; threshold_ ? k_down_ : k_up_;</div><div class="line">  <span class="keyword">const</span> <span class="keyword">int64_t</span> kMaxTimeDeltaMs = <span class="number">100</span>;</div><div class="line">  <span class="keyword">int64_t</span> time_delta_ms = <span class="built_in">std</span>::min(now_ms - last_update_ms_, kMaxTimeDeltaMs);</div><div class="line">  <span class="comment">// 公式一，阈值自适应，根据新的增益系数对阈值进行修正。</span></div><div class="line">  threshold_ +=</div><div class="line">      k * (<span class="built_in">fabs</span>(modified_offset) - threshold_) * time_delta_ms;</div><div class="line"></div><div class="line">  <span class="comment">// 阈值上下限内修正。</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> kMinThreshold = <span class="number">6</span>;</div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> kMaxThreshold = <span class="number">600</span>;</div><div class="line">  threshold_ = <span class="built_in">std</span>::min(<span class="built_in">std</span>::max(threshold_, kMinThreshold), kMaxThreshold);</div><div class="line"></div><div class="line">  last_update_ms_ = now_ms;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h1><p>[1] <a href="http://c3lab.poliba.it/images/6/65/Gcc-analysis.pdf" target="_blank" rel="external">google congestion control</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+
+
+
+
+
+
+<span id="busuanzi_container_page_pv">
+   本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+</span>
+
+  
     <article id="post-Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -981,76 +1061,10 @@
 </span>
 
   
-    <article id="post-九层妖塔" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/03/19/九层妖塔/">九层妖塔</a>
-    </h1>
-  
-
-        
-        <a href="/2017/03/19/九层妖塔/" class="archive-article-date">
-  	<time datetime="2017-03-19T11:18:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-19</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="3只精灵龙的其他故事"><a href="#3只精灵龙的其他故事" class="headerlink" title="3只精灵龙的其他故事"></a>3只精灵龙的其他故事</h1><p><a href="https://algebra84.github.io/2017/03/19/threedragon/" target="_blank" rel="external">涛哥分析的好有道理</a><br><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/法师奥秘.jpg" alt=""><br><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/骑士奥秘.jpg" alt=""><br>下一期涛哥应该要带来猜奥秘的模型了吧！</p>
-<p>以下代码待验证。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vector&gt;</span></span></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="keyword">class</span> tree &#123;</div><div class="line">  <span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">build_tree</span> <span class="params">(<span class="keyword">int</span> dragon, <span class="keyword">int</span> damage)</span> </span>&#123;</div><div class="line">      <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; in; </div><div class="line">      in.push_back (<span class="number">30</span>);</div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; dragon + <span class="number">1</span>; i++) &#123;</div><div class="line">        in.push_back (<span class="number">2</span>);</div><div class="line">      &#125;   </div><div class="line">      build_tree_1 (in, damage, <span class="number">1.0</span>);</div><div class="line">    &#125;   </div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">result_match</span> <span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;in)</span> </span>&#123;</div><div class="line">      <span class="keyword">int</span> cnt = <span class="number">0</span>;</div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; in.size (); i++)</div><div class="line">        <span class="keyword">if</span> (in[i] != <span class="number">0</span>)</div><div class="line">          cnt++;</div><div class="line">      <span class="keyword">return</span> cnt == alive;</div><div class="line">    &#125;   </div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">build_tree_1</span> <span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;in, <span class="keyword">int</span> damage, <span class="keyword">float</span> p)</span> </span>&#123;</div><div class="line">      <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line">      <span class="keyword">float</span> new_p = <span class="number">0.0</span>;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> DEBUG</span></div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; in.size (); i++)</div><div class="line">        <span class="built_in">cout</span> &lt;&lt; in[i] &lt;&lt; <span class="string">","</span>;</div><div class="line"></div><div class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">"Prob "</span> &lt;&lt; p &lt;&lt; <span class="string">" else damage "</span> &lt;&lt; damage &lt;&lt; <span class="built_in">endl</span>;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"></div><div class="line">      <span class="keyword">if</span> (damage == <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">if</span> (result_match (in))</div><div class="line">          result += p;</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">      &#125;   </div><div class="line"></div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; in.size (); i++) &#123;</div><div class="line">        <span class="keyword">if</span> (in[i] != <span class="number">0</span>)</div><div class="line">          count++;</div><div class="line">      &#125;</div><div class="line"></div><div class="line">      <span class="keyword">if</span> (count == <span class="number">0</span>)</div><div class="line">        <span class="keyword">return</span>;</div><div class="line"></div><div class="line">      new_p = p / count;</div><div class="line">      count = <span class="number">0</span>;</div><div class="line"></div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; in.size (); i++) &#123;</div><div class="line">        <span class="comment">/* A dead dragon.  */</span></div><div class="line">        <span class="keyword">if</span> (in[i] == <span class="number">0</span>)</div><div class="line">          <span class="keyword">continue</span>;</div><div class="line"></div><div class="line">        in[i]--;</div><div class="line">        build_tree_1 (in, damage - <span class="number">1</span>, new_p);</div><div class="line">        in[i]++;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    tree (<span class="keyword">int</span> dragon, <span class="keyword">int</span> damage, <span class="keyword">int</span> _alive) : alive (_alive) &#123;</div><div class="line">      result = <span class="number">0.0</span>;</div><div class="line">      build_tree (dragon, damage);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">float</span> <span class="title">get_result</span> <span class="params">()</span> </span>&#123;</div><div class="line">      <span class="keyword">return</span> result;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    ~tree () &#123;</div><div class="line">    &#125;</div><div class="line">  <span class="keyword">private</span>:</div><div class="line">    <span class="keyword">int</span> alive;</div><div class="line">    <span class="keyword">float</span> result;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span> <span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">  <span class="function">tree <span class="title">t</span> <span class="params">(<span class="number">3</span>, <span class="number">8</span>, <span class="number">1</span>)</span></span>;</div><div class="line">  <span class="built_in">cout</span> &lt;&lt; t.get_result () &lt;&lt; <span class="built_in">endl</span>;</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">涛哥说的都怼</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">fun</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2017/03/19/九层妖塔/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-
-
-
-
-
-
-<span id="busuanzi_container_page_pv">
-   本文总阅读量<span id="busuanzi_value_page_pv"></span>次
-</span>
-
-  
+    <nav id="page-nav">
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
+    </nav>
   
 
 
