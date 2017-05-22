@@ -6,14 +6,35 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Tag: 拥塞控制 | 近卫高地</title>
+  <title>Webrtc delay-base-bwe代码分析(5): AimdRateControl模块 | 近卫高地</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="近卫高地">
-<meta property="og:url" content="http://yoursite.com/tags/拥塞控制/index.html">
+  <meta name="description" content="0. 简介这个模块是根据OveruseDetector模块计算出来的状态来维护码率控制模块的自动状态机，并更新估算出来的对端发送速率，提供给REMB进行反馈。
+1. 原理
+一共维持三个状态，增长、保持、衰减，状态转换根据OveruseDetector的三个状态(Normal, Overuse, Underuse)来进行判断。
+
+当Overuse发生时，无论什么状态都进入衰减。
+当Underuse发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Webrtc delay-base-bwe代码分析(5): AimdRateControl模块">
+<meta property="og:url" content="http://yoursite.com/2017/05/22/Webrtc-delay-base-bwe代码分析-5-AimdRateControl模块/index.html">
 <meta property="og:site_name" content="近卫高地">
+<meta property="og:description" content="0. 简介这个模块是根据OveruseDetector模块计算出来的状态来维护码率控制模块的自动状态机，并更新估算出来的对端发送速率，提供给REMB进行反馈。
+1. 原理
+一共维持三个状态，增长、保持、衰减，状态转换根据OveruseDetector的三个状态(Normal, Overuse, Underuse)来进行判断。
+
+当Overuse发生时，无论什么状态都进入衰减。
+当Underuse发">
+<meta property="og:image" content="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/remote_rate_finite_state_machine.png">
+<meta property="og:updated_time" content="2017-05-22T11:39:05.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="近卫高地">
+<meta name="twitter:title" content="Webrtc delay-base-bwe代码分析(5): AimdRateControl模块">
+<meta name="twitter:description" content="0. 简介这个模块是根据OveruseDetector模块计算出来的状态来维护码率控制模块的自动状态机，并更新估算出来的对端发送速率，提供给REMB进行反馈。
+1. 原理
+一共维持三个状态，增长、保持、衰减，状态转换根据OveruseDetector的三个状态(Normal, Overuse, Underuse)来进行判断。
+
+当Overuse发生时，无论什么状态都进入衰减。
+当Underuse发">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/remote_rate_finite_state_machine.png">
   
     <link rel="alternative" href="/atom.xml" title="近卫高地" type="application/atom+xml">
   
@@ -153,36 +174,51 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-Webrtc-delay-base-bwe代码分析-5-AimdRateControl模块" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      Webrtc delay-base-bwe代码分析(5): AimdRateControl模块
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2017" class="archive-year">2017</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-5-AimdRateControl模块/" class="archive-article-date">
+
+        
+        <a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-5-AimdRateControl模块/" class="archive-article-date">
   	<time datetime="2017-05-22T11:38:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-5-AimdRateControl模块/">Webrtc delay-base-bwe代码分析(5): AimdRateControl模块</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="0-简介"><a href="#0-简介" class="headerlink" title="0. 简介"></a>0. 简介</h1><p>这个模块是根据OveruseDetector模块计算出来的状态来维护码率控制模块的自动状态机，并更新估算出来的对端发送速率，提供给REMB进行反馈。</p>
+<h1 id="1-原理"><a href="#1-原理" class="headerlink" title="1. 原理"></a>1. 原理</h1><p><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/remote_rate_finite_state_machine.png" alt=""></p>
+<p>一共维持三个状态，增长、保持、衰减，状态转换根据OveruseDetector的三个状态(Normal, Overuse, Underuse)来进行判断。</p>
+<ul>
+<li>当Overuse发生时，无论什么状态都进入衰减。</li>
+<li>当Underuse发生时，无论什么状态都进入保持状态。</li>
+<li>在保持和增长阶段，Normal状态将保持继续增长。</li>
+<li>在衰减阶段，Normal状态会将状态拉回保持状态。</li>
+</ul>
+<h1 id="2-代码"><a href="#2-代码" class="headerlink" title="2. 代码"></a>2. 代码</h1><p>核心函数为ChangeBitrate，其他部分代码比较简单这里不贴了。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">uint32_t</span> AimdRateControl::ChangeBitrate(<span class="keyword">uint32_t</span> current_bitrate_bps,</div><div class="line">                                        <span class="keyword">uint32_t</span> incoming_bitrate_bps,</div><div class="line">                                        <span class="keyword">int64_t</span> now_ms) &#123;</div><div class="line">  <span class="comment">// 在调用函数update更新对应的链路状态估计，累积码率，噪声值后</span></div><div class="line">  <span class="comment">// 会将updated置位，如果没置位则不会去更新码率。</span></div><div class="line">  <span class="keyword">if</span> (!updated_) &#123;</div><div class="line">    <span class="keyword">return</span> current_bitrate_bps_;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// An over-use should always trigger us to reduce the bitrate, even though</span></div><div class="line">  <span class="comment">// we have not yet established our first estimate. By acting on the over-use,</span></div><div class="line">  <span class="comment">// we will end up with a valid estimate.</span></div><div class="line">  <span class="comment">// 初始化未完成，如果不是一开始就Overuse，直接返回初始的码率即可。</span></div><div class="line">  <span class="keyword">if</span> (!bitrate_is_initialized_ &amp;&amp; current_input_.bw_state != kBwOverusing)</div><div class="line">    <span class="keyword">return</span> current_bitrate_bps_;</div><div class="line">  updated_ = <span class="literal">false</span>;</div><div class="line">  <span class="comment">// 这里对状态进行转换，这个函数是状态机状态转换函数</span></div><div class="line">  <span class="comment">// 1. Underuse总是进入Hold状态。</span></div><div class="line">  <span class="comment">// 2. Overuse总是进入Dec状态。</span></div><div class="line">  <span class="comment">// 3. Normal状态维持，除非当前在Hold状态，此时会进入Inc状态。</span></div><div class="line">  ChangeState(current_input_, now_ms);</div><div class="line">  <span class="comment">// Calculated here because it's used in multiple places.</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">float</span> incoming_bitrate_kbps = incoming_bitrate_bps / <span class="number">1000.0f</span>;</div><div class="line">  <span class="comment">// Calculate the max bit rate std dev given the normalized</span></div><div class="line">  <span class="comment">// variance and the current incoming bit rate.</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">float</span> std_max_bit_rate = <span class="built_in">sqrt</span>(var_max_bitrate_kbps_ *</div><div class="line">                                      avg_max_bitrate_kbps_);</div><div class="line">  <span class="keyword">switch</span> (rate_control_state_) &#123;</div><div class="line">	<span class="comment">// 保持状态不更新码率</span></div><div class="line">    <span class="keyword">case</span> kRcHold:</div><div class="line">      <span class="keyword">break</span>;</div><div class="line"></div><div class="line">    <span class="keyword">case</span> kRcIncrease:</div><div class="line">	  <span class="comment">// 三个状态，在最大值附近，超过最大值，比最大值高到不知道哪里去</span></div><div class="line">	  <span class="comment">// 最大均值已初始化，且当前码率高于最大值加上三倍方差，此时进入</span></div><div class="line">	  <span class="comment">// 比最大值高到不知道哪里去的状态，同时认为这个均值并不是很好使，复位。</span></div><div class="line">	  <span class="comment">// Above声明了，但是没有找到相应调用点。</span></div><div class="line">      <span class="keyword">if</span> (avg_max_bitrate_kbps_ &gt;= <span class="number">0</span> &amp;&amp;</div><div class="line">          incoming_bitrate_kbps &gt;</div><div class="line">              avg_max_bitrate_kbps_ + <span class="number">3</span> * std_max_bit_rate) &#123;</div><div class="line">        ChangeRegion(kRcMaxUnknown);</div><div class="line">        avg_max_bitrate_kbps_ = <span class="number">-1.0</span>;</div><div class="line">      &#125;</div><div class="line">	  <span class="comment">// </span></div><div class="line">      <span class="keyword">if</span> (rate_control_region_ == kRcNearMax) &#123;</div><div class="line">        <span class="comment">// Approximate the over-use estimator delay to 100 ms.</span></div><div class="line">		<span class="comment">// 已经接近最大值了，此时增长需谨慎，加性增加。</span></div><div class="line">        <span class="keyword">const</span> <span class="keyword">int64_t</span> response_time = rtt_ + <span class="number">100</span>;</div><div class="line">        <span class="keyword">uint32_t</span> additive_increase_bps = AdditiveRateIncrease(</div><div class="line">            now_ms, time_last_bitrate_change_, response_time);</div><div class="line">        current_bitrate_bps += additive_increase_bps;</div><div class="line"></div><div class="line">      &#125; <span class="keyword">else</span> &#123;</div><div class="line">		<span class="comment">// 由于没有Above状态的使用，因此认为比最大值高到不知道哪里去的状态属于</span></div><div class="line">		<span class="comment">// 上界未定，放开手倍增码率。</span></div><div class="line">        <span class="keyword">uint32_t</span> multiplicative_increase_bps = MultiplicativeRateIncrease(</div><div class="line">            now_ms, time_last_bitrate_change_, current_bitrate_bps);</div><div class="line">        current_bitrate_bps += multiplicative_increase_bps;</div><div class="line">      &#125;</div><div class="line"></div><div class="line">      time_last_bitrate_change_ = now_ms;</div><div class="line">      <span class="keyword">break</span>;</div><div class="line"></div><div class="line">    <span class="keyword">case</span> kRcDecrease:</div><div class="line">      bitrate_is_initialized_ = <span class="literal">true</span>;</div><div class="line">      <span class="keyword">if</span> (incoming_bitrate_bps &lt; min_configured_bitrate_bps_) &#123;</div><div class="line">		<span class="comment">// 真的不能再低了....</span></div><div class="line">        current_bitrate_bps = min_configured_bitrate_bps_;</div><div class="line">      &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="comment">// Set bit rate to something slightly lower than max</span></div><div class="line">        <span class="comment">// to get rid of any self-induced delay.</span></div><div class="line">        current_bitrate_bps = <span class="keyword">static_cast</span>&lt;<span class="keyword">uint32_t</span>&gt;(beta_ *</div><div class="line">                                                    incoming_bitrate_bps + <span class="number">0.5</span>);</div><div class="line">        <span class="keyword">if</span> (current_bitrate_bps &gt; current_bitrate_bps_) &#123;</div><div class="line">		  <span class="comment">// 本次速率仍然在增长</span></div><div class="line">          <span class="comment">// Avoid increasing the rate when over-using.</span></div><div class="line">          <span class="keyword">if</span> (rate_control_region_ != kRcMaxUnknown) &#123;</div><div class="line">			<span class="comment">// 如果上界可靠，则将码率设置在最大均值的beta_倍处，</span></div><div class="line">			<span class="comment">// 默认的beta_为0.85，同paper。</span></div><div class="line">            current_bitrate_bps = <span class="keyword">static_cast</span>&lt;<span class="keyword">uint32_t</span>&gt;(</div><div class="line">                beta_ * avg_max_bitrate_kbps_ * <span class="number">1000</span> + <span class="number">0.5f</span>);</div><div class="line">          &#125;</div><div class="line">		  <span class="comment">// 进行修正，和上一轮迭代的码率取小，如果上界不定</span></div><div class="line">		  <span class="comment">// 则取上一次迭代的码率值。</span></div><div class="line">          current_bitrate_bps = <span class="built_in">std</span>::min(current_bitrate_bps,</div><div class="line">                                         current_bitrate_bps_);</div><div class="line">        &#125;</div><div class="line">		<span class="comment">// 更新过新的码率值后，认为现在已经在最大均值附近。</span></div><div class="line">		<span class="comment">// 注意，每次认为上界无效时，总会把最大均值复位</span></div><div class="line">		<span class="comment">// 这里设置完对应状态后，即使上界无效，下面总会更新一个最大均值。</span></div><div class="line">        ChangeRegion(kRcNearMax);</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (incoming_bitrate_kbps &lt; avg_max_bitrate_kbps_ -</div><div class="line">            <span class="number">3</span> * std_max_bit_rate) &#123;</div><div class="line">		  <span class="comment">// 当前速率小于均值较多，认为均值不可靠，复位</span></div><div class="line">          avg_max_bitrate_kbps_ = <span class="number">-1.0</span>f;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">		<span class="comment">// 衰减状态下需要更新最大均值</span></div><div class="line">        UpdateMaxBitRateEstimate(incoming_bitrate_kbps);</div><div class="line">      &#125;</div><div class="line">      <span class="comment">// Stay on hold until the pipes are cleared.</span></div><div class="line">	  <span class="comment">// 降低码率后回到HOLD状态，如果网络状态仍然不好，在Overuse仍然会进入Dec状态。</span></div><div class="line">	  <span class="comment">// 如果恢复，则不会是Overuse，会保持或增长。</span></div><div class="line">      ChangeState(kRcHold);</div><div class="line">      time_last_bitrate_change_ = now_ms;</div><div class="line">      <span class="keyword">break</span>;</div><div class="line"></div><div class="line">    <span class="keyword">default</span>:</div><div class="line">      assert(<span class="literal">false</span>);</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">if</span> ((incoming_bitrate_bps &gt; <span class="number">100000</span> || current_bitrate_bps &gt; <span class="number">150000</span>) &amp;&amp;</div><div class="line">      current_bitrate_bps &gt; <span class="number">1.5</span> * incoming_bitrate_bps) &#123;</div><div class="line">    <span class="comment">// Allow changing the bit rate if we are operating at very low rates</span></div><div class="line">    <span class="comment">// Don't change the bit rate if the send side is too far off</span></div><div class="line">    current_bitrate_bps = current_bitrate_bps_;</div><div class="line">    time_last_bitrate_change_ = now_ms;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> current_bitrate_bps;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>加性码率增长代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">uint32_t</span> AimdRateControl::AdditiveRateIncrease(</div><div class="line">    <span class="keyword">int64_t</span> now_ms, <span class="keyword">int64_t</span> last_ms, <span class="keyword">int64_t</span> response_time_ms) <span class="keyword">const</span> &#123;</div><div class="line">  assert(response_time_ms &gt; <span class="number">0</span>);</div><div class="line">  <span class="keyword">double</span> beta = <span class="number">0.0</span>;</div><div class="line">  <span class="keyword">if</span> (last_ms &gt; <span class="number">0</span>) &#123;</div><div class="line">	<span class="comment">// 时间间隔和RTT之比作为系数。</span></div><div class="line">	<span class="comment">// 疑问，这里的时间点是经过采样的，可能会大于rtt？</span></div><div class="line">    beta = <span class="built_in">std</span>::min((now_ms - last_ms) / <span class="keyword">static_cast</span>&lt;<span class="keyword">double</span>&gt;(response_time_ms),</div><div class="line">                    <span class="number">1.0</span>);</div><div class="line">    <span class="keyword">if</span> (in_experiment_)</div><div class="line">      beta /= <span class="number">2.0</span>;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// 默认30fps，由于每个包不超过mtu，一般也就1100+，用这两个值估计每帧码率和每帧包数。</span></div><div class="line">  <span class="comment">// 并计算平均每个包的大小，最终增加的比特数不超过1000。</span></div><div class="line">  <span class="keyword">double</span> bits_per_frame = <span class="keyword">static_cast</span>&lt;<span class="keyword">double</span>&gt;(current_bitrate_bps_) / <span class="number">30.0</span>;</div><div class="line">  <span class="keyword">double</span> packets_per_frame = <span class="built_in">std</span>::<span class="built_in">ceil</span>(bits_per_frame / (<span class="number">8.0</span> * <span class="number">1200.0</span>));</div><div class="line">  <span class="keyword">double</span> avg_packet_size_bits = bits_per_frame / packets_per_frame;</div><div class="line">  <span class="keyword">uint32_t</span> additive_increase_bps = <span class="built_in">std</span>::max(</div><div class="line">      <span class="number">1000.0</span>, beta * avg_packet_size_bits);</div><div class="line">  <span class="keyword">return</span> additive_increase_bps;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>乘性部分比较简单，也是根据时间差来调整系数。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">uint32_t</span> AimdRateControl::MultiplicativeRateIncrease(</div><div class="line">    <span class="keyword">int64_t</span> now_ms, <span class="keyword">int64_t</span> last_ms, <span class="keyword">uint32_t</span> current_bitrate_bps) <span class="keyword">const</span> &#123;</div><div class="line">  <span class="keyword">double</span> alpha = <span class="number">1.08</span>;</div><div class="line">  <span class="keyword">if</span> (last_ms &gt; <span class="number">-1</span>) &#123;</div><div class="line">	<span class="comment">// 系数计算与文档中的1.05略有不同，使用时间差作为系数，1.08作为底数。</span></div><div class="line">    <span class="keyword">int</span> time_since_last_update_ms = <span class="built_in">std</span>::min(<span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(now_ms - last_ms),</div><div class="line">                                             <span class="number">1000</span>);</div><div class="line">    alpha = <span class="built_in">pow</span>(alpha,  time_since_last_update_ms / <span class="number">1000.0</span>);</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">uint32_t</span> multiplicative_increase_bps = <span class="built_in">std</span>::max(</div><div class="line">      current_bitrate_bps * (alpha - <span class="number">1.0</span>), <span class="number">1000.0</span>);</div><div class="line">  <span class="keyword">return</span> multiplicative_increase_bps;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最后一个是最大均值和方差的更新，主要在衰减状态时候进行估计。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">void AimdRateControl::UpdateMaxBitRateEstimate(float incoming_bitrate_kbps) &#123;</div><div class="line">  const float alpha = 0.05f;</div><div class="line">  // 当前没有初始值，先设为当前码率，如果有的话，就用当前的值和均值做平滑。</div><div class="line">  if (avg_max_bitrate_kbps_ == -1.0f) &#123;</div><div class="line">    avg_max_bitrate_kbps_ = incoming_bitrate_kbps;</div><div class="line">  &#125; else &#123;</div><div class="line">    avg_max_bitrate_kbps_ = (1 - alpha) * avg_max_bitrate_kbps_ +</div><div class="line">        alpha * incoming_bitrate_kbps;</div><div class="line">  &#125;</div><div class="line">  // Estimate the max bit rate variance and normalize the variance</div><div class="line">  // with the average max bit rate.</div><div class="line">  const float norm = std::max(avg_max_bitrate_kbps_, 1.0f);</div><div class="line">  // 方差的平滑</div><div class="line">  var_max_bitrate_kbps_ = (1 - alpha) * var_max_bitrate_kbps_ +</div><div class="line">      alpha * (avg_max_bitrate_kbps_ - incoming_bitrate_kbps) *</div><div class="line">          (avg_max_bitrate_kbps_ - incoming_bitrate_kbps) / norm;</div><div class="line">  // 0.4 ~= 14 kbit/s at 500 kbit/s</div><div class="line">  if (var_max_bitrate_kbps_ &lt; 0.4f) &#123;</div><div class="line">    var_max_bitrate_kbps_ = 0.4f;</div><div class="line">  &#125;</div><div class="line">  // 2.5f ~= 35 kbit/s at 500 kbit/s</div><div class="line">  if (var_max_bitrate_kbps_ &gt; 2.5f) &#123;</div><div class="line">    var_max_bitrate_kbps_ = 2.5f;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 
-        <div class="article-info info-on-right">
-          
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -198,330 +234,92 @@
 		</ul>
 	</div>
 
-          
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="http://s.jiathis.com/qrcode.php?url=http://yoursite.com/2017/05/22/Webrtc-delay-base-bwe代码分析-5-AimdRateControl模块/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:36:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
+<nav id="article-nav">
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块/">Webrtc delay-base-bwe代码分析(4): OveruseDetector模块</a>
-    </h1>
+  
+    <a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-4-OveruseDetector模块/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Webrtc delay-base-bwe代码分析(4): OveruseDetector模块</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+
+
+
+
+  
+    <div class="duoshuo"></div>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
 
-          
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:32:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/">Webrtc delay-base-bwe代码分析(3): OveruseEstimator模块</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-2-InterArrival模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:28:31.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-2-InterArrival模块/">Webrtc delay-base-bwe代码分析(2): InterArrival模块</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:18:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/">Webrtc delay-base-bwe代码分析(1): RateStatistics模块</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/04/11/TCP的FRTO分析/" class="archive-article-date">
-  	<time datetime="2017-04-11T11:04:12.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-04-11</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/04/11/TCP的FRTO分析/">TCP的FRTO分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/03/27/linux内核慢启动拥塞避免代码分析/" class="archive-article-date">
-  	<time datetime="2017-03-27T02:27:29.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-27</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/03/27/linux内核慢启动拥塞避免代码分析/">linux内核慢启动拥塞避免代码分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/03/19/TCP简介-读书笔记/" class="archive-article-date">
-  	<time datetime="2017-03-19T12:00:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-19</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/03/19/TCP简介-读书笔记/">TCP简介-读书笔记</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">读书笔记</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
-
+<span id="busuanzi_container_page_pv">
+   本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+</span>
 
           </div>
         </div>
@@ -548,9 +346,9 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
+		isPost: true,
 		isArchive: false,
-		isTag: true,
+		isTag: false,
 		isCategory: false,
 		open_in_new: false,
 		root: "/",
