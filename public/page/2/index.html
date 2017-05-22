@@ -155,6 +155,109 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-linux内核慢启动拥塞避免代码分析" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/03/27/linux内核慢启动拥塞避免代码分析/">linux内核慢启动拥塞避免代码分析</a>
+    </h1>
+  
+
+        
+        <a href="/2017/03/27/linux内核慢启动拥塞避免代码分析/" class="archive-article-date">
+  	<time datetime="2017-03-27T02:27:29.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>@(Network)[tcp, 慢启动]</p>
+<h1 id="TCP拥塞控制两个速率增长阶段分析"><a href="#TCP拥塞控制两个速率增长阶段分析" class="headerlink" title="TCP拥塞控制两个速率增长阶段分析"></a>TCP拥塞控制两个速率增长阶段分析</h1><h1 id="0-参考文档"><a href="#0-参考文档" class="headerlink" title="0. 参考文档"></a>0. 参考文档</h1><p>[1] <a href="https://tools.ietf.org/html/rfc5681" target="_blank" rel="external">rfc-5681</a><br>[2] <a href="http://blog.csdn.net/dog250/article/details/51348568" target="_blank" rel="external">tcp-abc-rfc</a><br>[3] <a href="https://tools.ietf.org/html/rfc3465" target="_blank" rel="external">rfc-3465</a><br>[4] <a href="https://tools.ietf.org/html/rfc3742" target="_blank" rel="external">rfc-3742</a></p>
+<h1 id="1-拥塞控制个人理解"><a href="#1-拥塞控制个人理解" class="headerlink" title="1. 拥塞控制个人理解"></a>1. 拥塞控制个人理解</h1><h2 id="1-1-慢启动与拥塞避免"><a href="#1-1-慢启动与拥塞避免" class="headerlink" title="1.1 慢启动与拥塞避免"></a>1.1 慢启动与拥塞避免</h2><p>慢启动和拥塞避免，主要是用于拥塞控制中拥塞窗口增长的维护。</p>
+<p>根据阈值，拥塞控制其实分为两部分，小于阈值的慢启动阶段，大于阈值进入拥塞避免阶段。</p>
+<p>慢启动作为拥塞控制的一部分，我觉得其名字取的比较具有混淆性。个人理解的慢启动分为两种，一种是拥塞窗口小于阈值时候正常的一个指数增长的过程，这个过程中的拥塞窗口不会重置，会持续增长，还有一种是与快速恢复对应的慢启动重新启动，这种时候会将拥塞窗口重置为1，并重新开始指数增长。这么理解的原因如下：</p>
+<p>在<a href="https://tools.ietf.org/html/rfc5681" target="_blank" rel="external">文档</a>中描述快速恢复时，当收到三个重复ack时候，这时候可能并不是实际丢包，可能是因为链路问题，较晚到达接收端。</p>
+<ul>
+<li>在BSD 4.3之前会进入慢启动阶段，但是理论上慢启动一般是指数上升的过程，反而是拥塞避免阶段线性上升速度较慢，且拥塞避免会更新当前的拥塞窗口和阈值，会出现小范围衰减。</li>
+<li>假如tcp认为当前包丢失，会很严格的重置拥塞窗口(具体代码如rto触发tcp_enter_loss)，这时候速率曲线不会只是单纯减低到某个值，而是会降低到零点。</li>
+</ul>
+<h2 id="1-2-快速恢复和快速重传"><a href="#1-2-快速恢复和快速重传" class="headerlink" title="1.2 快速恢复和快速重传"></a>1.2 快速恢复和快速重传</h2><p>因此，个人理解，老版本上收到三个重复ack认为丢包，进入丢包处理，重置了拥塞窗口，在非重复ack到来后，拥塞窗口仍然需要从零开始指数上升，而对于快速恢复而言，其只进入拥塞避免阶段，拥塞窗口只是进行一定修正，在非重复ack到来后，仍然能根据阈值来决定是否执行非重启的慢启动，这时候恢复速度相较于严格的丢包处理快了不少。</p>
+<p>由于tcp对于丢包的容忍极低，一旦丢包发生，就会进入严格的拥塞处理，而RTO是丢包主要判断依据，因此快速重传也是针对tcp对于丢包容忍度低的一个修正，避免进入RTO，直接影响传输性能。</p>
+<h1 id="2-拥塞控制代码分析"><a href="#2-拥塞控制代码分析" class="headerlink" title="2. 拥塞控制代码分析"></a>2. 拥塞控制代码分析</h1><p>本章主要基于reno的拥塞控制。下文中的代码均基于linux kernel 2.6.32版本，直到linux kernel 4.9-rc8之前的版本，tcp整体并没有太大变化。本文不分析frto相关内容。</p>
+<h2 id="2-1-调用链"><a href="#2-1-调用链" class="headerlink" title="2.1 调用链"></a>2.1 调用链</h2><p>由于文档描述上是直接给出一个计算过程，如慢启动阶段的指数上升，和代码直观上看略有不同，因此这里需要先缕清楚整个的调用链，能更好的描述整个拥塞控制的过程。</p>
+<p>tcp的拥塞主要是基于定时器(RTO)和ack的，因此主要处理函数都以tcp_ack为起点。这里不分析整个tcp_ack函数，仅分析常规调用链。</p>
+<p>整体入口如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 当ack时一个可疑的ack，如sack，或者路由发送的显示拥塞控制，或者当前拥塞状态不是正常状态时。</span></div><div class="line"><span class="keyword">if</span> (tcp_ack_is_dubious(sk, flag)) &#123;</div><div class="line">	<span class="comment">/* Advance CWND, if state allows this. */</span></div><div class="line">	<span class="keyword">if</span> ((flag &amp; FLAG_DATA_ACKED) &amp;&amp; !frto_cwnd &amp;&amp;</div><div class="line">	    tcp_may_raise_cwnd(sk, flag))</div><div class="line">	    <span class="comment">// 当窗口仍然满足可以增长的条件时，进入拥塞控制，</span></div><div class="line">	    <span class="comment">// 这是一个钩子函数，具体实现由具体拥塞控制算法来实现，</span></div><div class="line">	    <span class="comment">// 对于reno而言可能是慢启动，可能是拥塞避免。</span></div><div class="line">		tcp_cong_avoid(sk, ack, prior_in_flight);</div><div class="line">	<span class="comment">// 处理拥塞状态机，暂时不展开</span></div><div class="line">	tcp_fastretrans_alert(sk, prior_packets - tp-&gt;packets_out,</div><div class="line">			      flag);</div><div class="line">&#125; <span class="keyword">else</span> &#123;</div><div class="line">    <span class="comment">// 当这个ack是一个正常的数据确认包，进入拥塞控制</span></div><div class="line">	<span class="keyword">if</span> ((flag &amp; FLAG_DATA_ACKED) &amp;&amp; !frto_cwnd)</div><div class="line">		tcp_cong_avoid(sk, ack, prior_in_flight);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="2-2-tcp-reno的拥塞控制"><a href="#2-2-tcp-reno的拥塞控制" class="headerlink" title="2.2 tcp reno的拥塞控制"></a>2.2 tcp reno的拥塞控制</h2><p>tcp reno注册到拥塞控制框架中的是tcp_reno_cong_avoid函数。</p>
+<p>其代码较为简单，只是其中多了一部分tcp-abc的拥塞避免算法，其慢启动实现在tcp_slow_start中，可以参考[<a href="https://tools.ietf.org/html/rfc3465" target="_blank" rel="external">rfc-3465</a>][<a href="http://blog.csdn.net/dog250/article/details/51348568" target="_blank" rel="external">tcp_abc</a>]。大体是用已经确认的byte大小来作为拥塞控制的计算，在慢启动阶段会更加激进，但是可能会带来更大的burst。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * TCP Reno congestion control</div><div class="line"> * This is special case used for fallback as well.</div><div class="line"> */</div><div class="line"><span class="comment">/* This is Jacobson's slow start and congestion avoidance.</span></div><div class="line"> * SIGCOMM '88, p. 328.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">tcp_reno_cong_avoid</span><span class="params">(<span class="keyword">struct</span> sock *sk, u32 ack, u32 in_flight)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">struct</span> tcp_sock *tp = tcp_sk(sk);</div><div class="line"></div><div class="line">	<span class="keyword">if</span> (!tcp_is_cwnd_limited(sk, in_flight))</div><div class="line">		<span class="keyword">return</span>;</div><div class="line"></div><div class="line">	<span class="comment">/* In "safe" area, increase. */</span></div><div class="line">	<span class="comment">// 小于阈值会进入慢启动环节，不重置窗口的慢启动。</span></div><div class="line">	<span class="keyword">if</span> (tp-&gt;snd_cwnd &lt;= tp-&gt;snd_ssthresh)</div><div class="line">		tcp_slow_start(tp);</div><div class="line"></div><div class="line">	<span class="comment">/* In dangerous area, increase slowly. */</span></div><div class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (sysctl_tcp_abc) &#123;</div><div class="line">		<span class="comment">/* RFC3465: Appropriate Byte Count</span></div><div class="line">		 * increase once for each full cwnd acked</div><div class="line">		 */</div><div class="line">		<span class="comment">// RFC3465的拥塞避免算法，使用bytes_acked来作为修改拥塞窗口的判断条件</span></div><div class="line">		<span class="keyword">if</span> (tp-&gt;bytes_acked &gt;= tp-&gt;snd_cwnd*tp-&gt;mss_cache) &#123;</div><div class="line">			tp-&gt;bytes_acked -= tp-&gt;snd_cwnd*tp-&gt;mss_cache;</div><div class="line">			<span class="keyword">if</span> (tp-&gt;snd_cwnd &lt; tp-&gt;snd_cwnd_clamp)</div><div class="line">				tp-&gt;snd_cwnd++;</div><div class="line">		&#125;</div><div class="line">	&#125; <span class="keyword">else</span> &#123;</div><div class="line">	    <span class="comment">// 拥塞避免</span></div><div class="line">		tcp_cong_avoid_ai(tp, tp-&gt;snd_cwnd);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="2-3-慢启动"><a href="#2-3-慢启动" class="headerlink" title="2.3 慢启动"></a>2.3 慢启动</h2><p>慢启动里面额外涉及两篇rfc，<a href="https://tools.ietf.org/html/rfc3742" target="_blank" rel="external">rfc-3742</a>和<a href="https://tools.ietf.org/html/rfc3465" target="_blank" rel="external">tcp_abc</a>。</p>
+<p>其中snd_cwnd_cnt为线性增长器，只有当线性增长器大于一个窗口大小时，其才会将发送窗口增加，即其单位为1/snd_cwnd，后续还会在拥塞避免代码中见到。</p>
+<p>刚开始看代码时对下面那个循环并不是很理解，不理解为什么++是指数增长，直到放到整个调用栈上看，其具体流程如代码注释中所写，为指数增长的过程。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * Slow start is used when congestion window is less than slow start</div><div class="line"> * threshold. This version implements the basic RFC2581 version</div><div class="line"> * and optionally supports:</div><div class="line"> * 	RFC3742 Limited Slow Start  	  - growth limited to max_ssthresh</div><div class="line"> *	RFC3465 Appropriate Byte Counting - growth limited by bytes acknowledged</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">tcp_slow_start</span><span class="params">(<span class="keyword">struct</span> tcp_sock *tp)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> cnt; <span class="comment">/* increase in packets */</span></div><div class="line"></div><div class="line">	<span class="comment">/* RFC3465: ABC Slow start</span></div><div class="line">	 * Increase only after a full MSS of bytes is acked</div><div class="line">	 *</div><div class="line">	 * TCP sender SHOULD increase cwnd by the number of</div><div class="line">	 * previously unacknowledged bytes ACKed by each incoming</div><div class="line">	 * acknowledgment, provided the increase is not more than L</div><div class="line">	 */</div><div class="line">    <span class="comment">// 不满足tcp abc的窗口增加条件，此时确认的字节数小于mss_cache。</span></div><div class="line">	<span class="keyword">if</span> (sysctl_tcp_abc &amp;&amp; tp-&gt;bytes_acked &lt; tp-&gt;mss_cache)</div><div class="line">		<span class="keyword">return</span>;</div><div class="line"></div><div class="line">    <span class="comment">// RFC 3742，限制慢启动在一个RTT内的burst。</span></div><div class="line">	<span class="keyword">if</span> (sysctl_tcp_max_ssthresh &gt; <span class="number">0</span> &amp;&amp; tp-&gt;snd_cwnd &gt; sysctl_tcp_max_ssthresh)</div><div class="line">		cnt = sysctl_tcp_max_ssthresh &gt;&gt; <span class="number">1</span>;	<span class="comment">/* limited slow start */</span></div><div class="line">	<span class="keyword">else</span></div><div class="line">	<span class="comment">// 加上一个窗口大小，在没有abc的情况，保证在最底下的循环中拥塞窗口大小至少增加1.</span></div><div class="line">		cnt = tp-&gt;snd_cwnd;			<span class="comment">/* exponential increase */</span></div><div class="line"></div><div class="line">	<span class="comment">/* RFC3465: ABC</span></div><div class="line">	 * We MAY increase by 2 if discovered delayed ack</div><div class="line">	 */</div><div class="line">	<span class="comment">// tcp-abc，慢启动阶段更激进的burst。</span></div><div class="line">	<span class="keyword">if</span> (sysctl_tcp_abc &gt; <span class="number">1</span> &amp;&amp; tp-&gt;bytes_acked &gt;= <span class="number">2</span>*tp-&gt;mss_cache)</div><div class="line">		cnt &lt;&lt;= <span class="number">1</span>;</div><div class="line">	tp-&gt;bytes_acked = <span class="number">0</span>;</div><div class="line"></div><div class="line">    <span class="comment">// 更新snd_cwnd_cnt(窗口线性增长器)</span></div><div class="line">    tp-&gt;snd_cwnd_cnt += cnt;</div><div class="line">    <span class="comment">// 线性增长器是窗口的多少倍，窗口就增加多少。</span></div><div class="line">    <span class="comment">// 注意：这里的标准场景下的线性增长，每次也只增长1个窗口大小，</span></div><div class="line">    <span class="comment">// 但是其仍然是指数增长，因此每个窗口发出去的数据对应一个ack，</span></div><div class="line">    <span class="comment">// 而每一个ack都会对应触发一次增长。</span></div><div class="line">    <span class="comment">// 以下为一个简单的例子，sender为发送端，receiver为接收端</span></div><div class="line">    <span class="comment">// px为包号为x的包，ack x为对第x个包的确认</span></div><div class="line">    <span class="comment">// snd_cwnd为拥塞窗口</span></div><div class="line">    <span class="comment">// sender                                           receiver</span></div><div class="line">    <span class="comment">//  p1 (snd_cwnd 1)  ---------------------------&gt;</span></div><div class="line">    <span class="comment">//    </span></div><div class="line">    <span class="comment">//                   &lt;---------------------------     ack 1</span></div><div class="line">    <span class="comment">//  snd_cwnd++ (2)</span></div><div class="line">    <span class="comment">//</span></div><div class="line">    <span class="comment">//  p2 (snd_cwnd 2)  ---------------------------&gt;</span></div><div class="line">    <span class="comment">//  p3 (snd_cwnd 2)  ---------------------------&gt; </span></div><div class="line">    <span class="comment">//</span></div><div class="line">    <span class="comment">//                   &lt;---------------------------     ack 2</span></div><div class="line">    <span class="comment">//  snd_cwnd++ (3)</span></div><div class="line">    <span class="comment">//                   &lt;---------------------------     ack 3</span></div><div class="line">    <span class="comment">//  snd_cwnd++ (4)</span></div><div class="line">    <span class="comment">//</span></div><div class="line">    <span class="comment">//  p4 (snd_cwnd 4)  ---------------------------&gt;</span></div><div class="line">    <span class="comment">//  p5 (snd_cwnd 4)  ---------------------------&gt;</span></div><div class="line">    <span class="comment">//  p6 (snd_cwnd 4)  ---------------------------&gt;</span></div><div class="line">    <span class="comment">//  p7 (snd_cwnd 4)  ---------------------------&gt;</span></div><div class="line">    <span class="comment">//</span></div><div class="line">    <span class="comment">//                   &lt;---------------------------     ack 4</span></div><div class="line">    <span class="comment">//  snd_cwnd++ (5)</span></div><div class="line">    <span class="comment">//                   &lt;---------------------------     ack 5</span></div><div class="line">    <span class="comment">//  snd_cwnd++ (6)</span></div><div class="line">    <span class="comment">//                   &lt;---------------------------     ack 6</span></div><div class="line">    <span class="comment">//  snd_cwnd++ (7)</span></div><div class="line">    <span class="comment">//                   &lt;---------------------------     ack 7</span></div><div class="line">    <span class="comment">//  snd_cwnd++ (8)</span></div><div class="line">    <span class="comment">//  send with snd_cwnd = 8 (p8 - p15)</span></div><div class="line">    <span class="comment">// 每一个ack对应增加一个窗口大小，不丢包的场景下相当于窗口以指数上升</span></div><div class="line">    <span class="comment">// 1 --&gt; 2 --&gt; 4 --&gt; 8</span></div><div class="line">	<span class="keyword">while</span> (tp-&gt;snd_cwnd_cnt &gt;= tp-&gt;snd_cwnd) &#123;</div><div class="line">		tp-&gt;snd_cwnd_cnt -= tp-&gt;snd_cwnd;</div><div class="line">		<span class="keyword">if</span> (tp-&gt;snd_cwnd &lt; tp-&gt;snd_cwnd_clamp)</div><div class="line">			tp-&gt;snd_cwnd++;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="2-4-拥塞避免"><a href="#2-4-拥塞避免" class="headerlink" title="2.4 拥塞避免"></a>2.4 拥塞避免</h2><p>拥塞避免的代码比较简短，注意2.3中所写的，snd_cwnd_cnt为线性增长器，其单位为1 / w。在reno调用中，这里的w也为snd_cwnd窗口大小。即每一个ack只增加1 / snd_\cwnd大小的窗口。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* In theory this is tp-&gt;snd_cwnd += 1 / tp-&gt;snd_cwnd (or alternative w) */</span></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">tcp_cong_avoid_ai</span><span class="params">(<span class="keyword">struct</span> tcp_sock *tp, u32 w)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="comment">// 每次cnt++，直到w次后snd_cwnd++，即单位 1 / w</span></div><div class="line">	<span class="keyword">if</span> (tp-&gt;snd_cwnd_cnt &gt;= w) &#123;</div><div class="line">		<span class="keyword">if</span> (tp-&gt;snd_cwnd &lt; tp-&gt;snd_cwnd_clamp)</div><div class="line">			tp-&gt;snd_cwnd++;</div><div class="line">		tp-&gt;snd_cwnd_cnt = <span class="number">0</span>;</div><div class="line">	&#125; <span class="keyword">else</span> &#123;</div><div class="line">		tp-&gt;snd_cwnd_cnt++;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="3-kernel-4-9的改变"><a href="#3-kernel-4-9的改变" class="headerlink" title="3. kernel 4.9的改变"></a>3. kernel 4.9的改变</h1><p>对tcp_slow_start的改动不算是4.9的，早在3.18之前就已经改变了，使用的已经不是之前的snd_cwnd_cnt，而是采用tcp-abc算法来进行慢启动。</p>
+<p>慢启动仍然使用类似tcp-abc的实现机制，不过其并不以byte作为单位，而是以MSS作为单位进行处理。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* Slow start is used when congestion window is no greater than the slow start</span></div><div class="line"> * threshold. We base on RFC2581 and also handle stretch ACKs properly.</div><div class="line"> * We do not implement RFC3465 Appropriate Byte Counting (ABC) per se but</div><div class="line"> * something better;) a packet is only considered (s)acked in its entirety to</div><div class="line"> * defend the ACK attacks described in the RFC. Slow start processes a stretch</div><div class="line"> * ACK of degree N as if N acks of degree 1 are received back to back except</div><div class="line"> * ABC caps N to 2. Slow start exits when cwnd grows over ssthresh and</div><div class="line"> * returns the leftover acks to adjust cwnd in congestion avoidance mode.</div><div class="line"> */</div><div class="line"><span class="function">u32 <span class="title">tcp_slow_start</span><span class="params">(<span class="keyword">struct</span> tcp_sock *tp, u32 acked)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="comment">// 使用确认的包数(其中可能包括sack的确认，或者重传数据的确认都加上)</span></div><div class="line">    <span class="comment">// 来更新窗口值，而不是之前的byte。</span></div><div class="line">    <span class="comment">// 在函数tcp_clean_rtx_queue中有更新对应的delivered。</span></div><div class="line">    <span class="comment">// 其更新的值貌似和MSS有关系。</span></div><div class="line">	u32 cwnd = min(tp-&gt;snd_cwnd + acked, tp-&gt;snd_ssthresh);</div><div class="line"></div><div class="line">    <span class="comment">// 当acked仍然有值，说明超过阈值，处理完slow start后还会进行congestion avoid的处理。</span></div><div class="line">	acked -= cwnd - tp-&gt;snd_cwnd;</div><div class="line">	tp-&gt;snd_cwnd = min(cwnd, tp-&gt;snd_cwnd_clamp);</div><div class="line"></div><div class="line">	<span class="keyword">return</span> acked;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>拥塞避免上和老版本类似，也使用到了线性增长器，但是涨幅比之前版本较大，并不是以1为计数，而是以acked，即已经确认的MSS个数据片作为单位。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* In theory this is tp-&gt;snd_cwnd += 1 / tp-&gt;snd_cwnd (or alternative w),</span></div><div class="line"> * for every packet that was ACKed.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">tcp_cong_avoid_ai</span><span class="params">(<span class="keyword">struct</span> tcp_sock *tp, u32 w, u32 acked)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="comment">/* If credits accumulated at a higher w, apply them gently now. */</span></div><div class="line">	<span class="comment">// 第一次线性增长计算。</span></div><div class="line">	<span class="keyword">if</span> (tp-&gt;snd_cwnd_cnt &gt;= w) &#123;</div><div class="line">		tp-&gt;snd_cwnd_cnt = <span class="number">0</span>;</div><div class="line">		tp-&gt;snd_cwnd++;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">    <span class="comment">// 以 acked / snd_cwnd为单位增长。将循环改为除法。</span></div><div class="line">	tp-&gt;snd_cwnd_cnt += acked;</div><div class="line">	<span class="keyword">if</span> (tp-&gt;snd_cwnd_cnt &gt;= w) &#123;</div><div class="line">		u32 delta = tp-&gt;snd_cwnd_cnt / w;</div><div class="line"></div><div class="line">		tp-&gt;snd_cwnd_cnt -= delta * w;</div><div class="line">		tp-&gt;snd_cwnd += delta;</div><div class="line">	&#125;</div><div class="line">	tp-&gt;snd_cwnd = min(tp-&gt;snd_cwnd, tp-&gt;snd_cwnd_clamp);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>@小刘<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">悦</div></pre></td></tr></table></figure></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2017/03/27/linux内核慢启动拥塞避免代码分析/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+
+
+
+
+
+
+<span id="busuanzi_container_page_pv">
+   本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+</span>
+
+  
     <article id="post-TCP简介-读书笔记" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -469,14 +572,6 @@
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">QUIC</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">传输协议</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">TCP</a>
               </li>
              
@@ -489,7 +584,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">读书笔记</a>
+                <a href="javascript:void(0)" class="js-tag color5">QUIC</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">传输协议</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -497,7 +596,7 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">webrt</a>
+                <a href="javascript:void(0)" class="js-tag color5">读书笔记</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -506,6 +605,10 @@
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">fun</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">webrt</a>
               </li>
             
             <div class="clearfix"></div>
