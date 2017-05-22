@@ -155,6 +155,87 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Webrtc-delay-base-bwe代码分析-1-RateStatistics模块" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/">Webrtc delay-base-bwe代码分析(1): RateStatistics模块</a>
+    </h1>
+  
+
+        
+        <a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/" class="archive-article-date">
+  	<time datetime="2017-05-22T11:18:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>RateStatistics这个类的作用为记录一个时间窗口内的速率值，并返回当前时间区域内的码率值。单独开一个文章主要是用来描述其用来记录速率值的桶，一开始看的比较迷糊。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> RateStatistics &#123;</div><div class="line">  <span class="comment">// Counters are kept in buckets (circular buffer), with one bucket</span></div><div class="line">  <span class="comment">// per millisecond.</span></div><div class="line">  <span class="comment">// 每毫秒一个记录值。</span></div><div class="line">  <span class="keyword">struct</span> Bucket &#123;</div><div class="line">    <span class="keyword">size_t</span> sum;      <span class="comment">// Sum of all samples in this bucket.</span></div><div class="line">    <span class="keyword">size_t</span> samples;  <span class="comment">// Number of samples in this bucket.</span></div><div class="line">  &#125;;</div><div class="line">  <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;Bucket[]&gt; buckets_;</div><div class="line"></div><div class="line">  <span class="comment">// 统计总值，一个为总的传输字节数，一个为这个单位时间内，总的采样点数。</span></div><div class="line">  <span class="comment">// Total count recorded in buckets.</span></div><div class="line">  <span class="keyword">size_t</span> accumulated_count_;</div><div class="line"></div><div class="line">  <span class="comment">// The total number of samples in the buckets.</span></div><div class="line">  <span class="keyword">size_t</span> num_samples_;</div><div class="line"></div><div class="line">  <span class="comment">// 某个采样时间内的时间起点。包括时间值和索引值。</span></div><div class="line">  <span class="comment">// Oldest time recorded in buckets.</span></div><div class="line">  <span class="keyword">int64_t</span> oldest_time_;</div><div class="line"></div><div class="line">  <span class="comment">// Bucket index of oldest counter recorded in buckets.</span></div><div class="line">  <span class="keyword">uint32_t</span> oldest_index_;</div><div class="line"></div><div class="line">  <span class="comment">// 类的参数值</span></div><div class="line">  <span class="comment">// To convert counts/ms to desired units</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">float</span> scale_;</div><div class="line"></div><div class="line">  <span class="comment">// The window sizes, in ms, over which the rate is calculated.</span></div><div class="line">  <span class="comment">// 最大的时间窗口，单位为毫秒，每一毫秒都有一个独立的Bucket，形成一个桶，桶的索引以时间计算。</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">int64_t</span> max_window_size_ms_;</div><div class="line">  <span class="keyword">int64_t</span> current_window_size_ms_;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>数据结构主要分为三部分：</p>
+<ul>
+<li>总的统计值，包括当前时间窗口内总的传输字节数和总的采样点个数。</li>
+<li>当前时间窗口内的索引的初值，类似array[0]一样的存在，记录这个时间窗口内的第一个时间点及其对应的索引。</li>
+<li>设置参数。</li>
+</ul>
+<p>简单示例:</p>
+<p><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/rate_statistics_ring.png" alt=""></p>
+<p>如上图中，假设原来基准点为t1, 窗口值为1000ms，此时的时间窗口范围为[t1, t1 + 999ms]，此时新来的包将时间窗口的范围更新了，更新为[t1 + 3ms, t1 + 1002ms]，此时需要从t1及对应的index开始遍历，将所有超过时间窗口下限的元素抛弃，此时新的时间窗口为[t1 + 3ms - 1000, t1 + 3ms]，每一个bucket对应的时间点值也发生变化了(物理含义)。而对于插入一个节点则容易的多，只需要将该点的时间减去当前时间下限，其差值即为Bucket对应的下标。</p>
+<p>原理弄明白了，代码也比较简单。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> RateStatistics::Update(<span class="keyword">size_t</span> count, <span class="keyword">int64_t</span> now_ms) &#123;</div><div class="line">  <span class="keyword">if</span> (now_ms &lt; oldest_time_) &#123;</div><div class="line">    <span class="comment">// Too old data is ignored.</span></div><div class="line">    <span class="keyword">return</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// 每次更新值之前，需要更新整个窗口的时间区间。</span></div><div class="line">  <span class="comment">// 保证索引有效</span></div><div class="line">  EraseOld(now_ms);</div><div class="line"></div><div class="line">  <span class="comment">// First ever sample, reset window to start now.</span></div><div class="line">  <span class="keyword">if</span> (!IsInitialized())</div><div class="line">    oldest_time_ = now_ms;</div><div class="line"></div><div class="line">  <span class="comment">// now_ms在桶中的位置由基准时间(oldest_time)和自身时间的毫秒差作为索引。</span></div><div class="line">  <span class="keyword">uint32_t</span> now_offset = <span class="keyword">static_cast</span>&lt;<span class="keyword">uint32_t</span>&gt;(now_ms - oldest_time_);</div><div class="line">  RTC_DCHECK_LT(now_offset, max_window_size_ms_);</div><div class="line">  <span class="keyword">uint32_t</span> index = oldest_index_ + now_offset;</div><div class="line">  <span class="keyword">if</span> (index &gt;= max_window_size_ms_)</div><div class="line">    index -= max_window_size_ms_;</div><div class="line">  <span class="comment">// 更新统计值</span></div><div class="line">  buckets_[index].sum += count;</div><div class="line">  ++buckets_[index].samples;</div><div class="line">  accumulated_count_ += count;</div><div class="line">  ++num_samples_;</div><div class="line">&#125;</div><div class="line"></div><div class="line">rtc::Optional&lt;<span class="keyword">uint32_t</span>&gt; RateStatistics::Rate(<span class="keyword">int64_t</span> now_ms) <span class="keyword">const</span> &#123;</div><div class="line">  <span class="comment">// Yeah, this const_cast ain't pretty, but the alternative is to declare most</span></div><div class="line">  <span class="comment">// of the members as mutable...</span></div><div class="line">  <span class="keyword">const_cast</span>&lt;RateStatistics*&gt;(<span class="keyword">this</span>)-&gt;EraseOld(now_ms);</div><div class="line"></div><div class="line">  <span class="comment">// If window is a single bucket or there is only one sample in a data set that</span></div><div class="line">  <span class="comment">// has not grown to the full window size, treat this as rate unavailable.</span></div><div class="line">  <span class="comment">// 真正有效的时间区间。</span></div><div class="line">  <span class="keyword">int64_t</span> active_window_size = now_ms - oldest_time_ + <span class="number">1</span>;</div><div class="line">  <span class="comment">// 采样点数不足时候返回无效值。</span></div><div class="line">  <span class="keyword">if</span> (num_samples_ == <span class="number">0</span> || active_window_size &lt;= <span class="number">1</span> ||</div><div class="line">      (num_samples_ &lt;= <span class="number">1</span> &amp;&amp; active_window_size &lt; current_window_size_ms_)) &#123;</div><div class="line">	<span class="comment">// 返回一个无效值</span></div><div class="line">    <span class="keyword">return</span> rtc::Optional&lt;<span class="keyword">uint32_t</span>&gt;();</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// 码率的因子，最后的值为（总大小 * scale_ / 总的有效时间）</span></div><div class="line">  <span class="keyword">float</span> scale = scale_ / active_window_size;</div><div class="line">  <span class="keyword">return</span> rtc::Optional&lt;<span class="keyword">uint32_t</span>&gt;(</div><div class="line">      <span class="keyword">static_cast</span>&lt;<span class="keyword">uint32_t</span>&gt;(accumulated_count_ * scale + <span class="number">0.5f</span>));</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">void</span> RateStatistics::EraseOld(<span class="keyword">int64_t</span> now_ms) &#123;</div><div class="line">  <span class="keyword">if</span> (!IsInitialized())</div><div class="line">    <span class="keyword">return</span>;</div><div class="line"></div><div class="line">  <span class="comment">// New oldest time that is included in data set.</span></div><div class="line">  <span class="comment">// 根据窗口大小更新当前时间窗口，更新为[now_ms - 窗口， now_ms]</span></div><div class="line">  <span class="keyword">int64_t</span> new_oldest_time = now_ms - current_window_size_ms_ + <span class="number">1</span>;</div><div class="line"></div><div class="line">  <span class="comment">// New oldest time is older than the current one, no need to cull data.</span></div><div class="line">  <span class="keyword">if</span> (new_oldest_time &lt;= oldest_time_)</div><div class="line">    <span class="keyword">return</span>;</div><div class="line"></div><div class="line">  <span class="comment">// Loop over buckets and remove too old data points.</span></div><div class="line">  <span class="comment">// 从当前时间窗口下限开始逐毫秒遍历</span></div><div class="line">  <span class="keyword">while</span> (num_samples_ &gt; <span class="number">0</span> &amp;&amp; oldest_time_ &lt; new_oldest_time) &#123;</div><div class="line">    <span class="keyword">const</span> Bucket&amp; oldest_bucket = buckets_[oldest_index_];</div><div class="line">    RTC_DCHECK_GE(accumulated_count_, oldest_bucket.sum);</div><div class="line">    RTC_DCHECK_GE(num_samples_, oldest_bucket.samples);</div><div class="line">	<span class="comment">// 从统计数据中将超时的Bucket中的数据扣除，并清空Bucket。</span></div><div class="line">    accumulated_count_ -= oldest_bucket.sum;</div><div class="line">    num_samples_ -= oldest_bucket.samples;</div><div class="line">    buckets_[oldest_index_] = Bucket();</div><div class="line">	<span class="comment">// 环形</span></div><div class="line">    <span class="keyword">if</span> (++oldest_index_ &gt;= max_window_size_ms_)</div><div class="line">      oldest_index_ = <span class="number">0</span>;</div><div class="line">    ++oldest_time_;</div><div class="line">  &#125;</div><div class="line">  oldest_time_ = new_oldest_time;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+
+
+
+
+
+
+<span id="busuanzi_container_page_pv">
+   本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+</span>
+
+  
     <article id="post-webrtc中rtcp码率控制分析" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -710,11 +791,11 @@
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">读书笔记</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">读书笔记</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
         		</li>
       		
 		</ul>
@@ -909,6 +990,14 @@
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">webrtc</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">congestion control</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">QUIC</a>
               </li>
              
@@ -925,11 +1014,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">拥塞控制</a>
+                <a href="javascript:void(0)" class="js-tag color5">读书笔记</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">读书笔记</a>
+                <a href="javascript:void(0)" class="js-tag color5">拥塞控制</a>
               </li>
              
               <li class="article-tag-list-item">
