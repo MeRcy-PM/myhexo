@@ -6,14 +6,44 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives | 近卫高地</title>
+  <title>Webrtc delay-base-bwe代码分析(3): OveruseEstimator模块 | 近卫高地</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="近卫高地">
-<meta property="og:url" content="http://yoursite.com/archives/index.html">
+  <meta name="description" content="该模块是一个卡尔曼滤波，根据当前到达时间差和传输大小的值，对到达时间差进行滤波，计算更精准的到达时间差。
+0. 卡尔曼滤波基础公式从参考文档中获得基础公式及对应变量意义。
+公式：
+变量：
+
+1. OveruseEstimator的卡尔曼滤波公式
+
+2. 代码分析2.1 update12345678910111213141516171819202122232425262728293031323334">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Webrtc delay-base-bwe代码分析(3): OveruseEstimator模块">
+<meta property="og:url" content="http://yoursite.com/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/index.html">
 <meta property="og:site_name" content="近卫高地">
+<meta property="og:description" content="该模块是一个卡尔曼滤波，根据当前到达时间差和传输大小的值，对到达时间差进行滤波，计算更精准的到达时间差。
+0. 卡尔曼滤波基础公式从参考文档中获得基础公式及对应变量意义。
+公式：
+变量：
+
+1. OveruseEstimator的卡尔曼滤波公式
+
+2. 代码分析2.1 update12345678910111213141516171819202122232425262728293031323334">
+<meta property="og:image" content="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/Kalman_formula.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/kalman_argument.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/kalman_analyze.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/webrtc_formula.png">
+<meta property="og:updated_time" content="2017-05-22T11:33:20.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="近卫高地">
+<meta name="twitter:title" content="Webrtc delay-base-bwe代码分析(3): OveruseEstimator模块">
+<meta name="twitter:description" content="该模块是一个卡尔曼滤波，根据当前到达时间差和传输大小的值，对到达时间差进行滤波，计算更精准的到达时间差。
+0. 卡尔曼滤波基础公式从参考文档中获得基础公式及对应变量意义。
+公式：
+变量：
+
+1. OveruseEstimator的卡尔曼滤波公式
+
+2. 代码分析2.1 update12345678910111213141516171819202122232425262728293031323334">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/Kalman_formula.png">
   
     <link rel="alternative" href="/atom.xml" title="近卫高地" type="application/atom+xml">
   
@@ -153,36 +183,44 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      Webrtc delay-base-bwe代码分析(3): OveruseEstimator模块
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2017" class="archive-year">2017</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/" class="archive-article-date">
+
+        
+        <a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/" class="archive-article-date">
   	<time datetime="2017-05-22T11:32:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/">Webrtc delay-base-bwe代码分析(3): OveruseEstimator模块</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>该模块是一个卡尔曼滤波，根据当前到达时间差和传输大小的值，对到达时间差进行滤波，计算更精准的到达时间差。</p>
+<h1 id="0-卡尔曼滤波基础公式"><a href="#0-卡尔曼滤波基础公式" class="headerlink" title="0. 卡尔曼滤波基础公式"></a>0. 卡尔曼滤波基础公式</h1><p>从<a href="[http://www.cnblogs.com/jcchen1987/p/4371439.html]">参考文档</a>中获得基础公式及对应变量意义。</p>
+<p>公式：</p>
+<p><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/Kalman_formula.png" alt=""><br>变量：</p>
+<p><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/kalman_argument.png" alt=""></p>
+<h1 id="1-OveruseEstimator的卡尔曼滤波公式"><a href="#1-OveruseEstimator的卡尔曼滤波公式" class="headerlink" title="1. OveruseEstimator的卡尔曼滤波公式"></a>1. OveruseEstimator的卡尔曼滤波公式</h1><p><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/kalman_analyze.png" alt=""></p>
+<p><img src="https://raw.githubusercontent.com/MeRcy-PM/PIC/master/webrtc/webrtc_formula.png" alt=""></p>
+<h1 id="2-代码分析"><a href="#2-代码分析" class="headerlink" title="2. 代码分析"></a>2. 代码分析</h1><h2 id="2-1-update"><a href="#2-1-update" class="headerlink" title="2.1 update"></a>2.1 update</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> OveruseEstimator::Update(<span class="keyword">int64_t</span> t_delta,</div><div class="line">                              <span class="keyword">double</span> ts_delta,</div><div class="line">                              <span class="keyword">int</span> size_delta,</div><div class="line">                              BandwidthUsage current_hypothesis) &#123;</div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> min_frame_period = UpdateMinFramePeriod(ts_delta);</div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> t_ts_delta = t_delta - ts_delta;</div><div class="line">  <span class="keyword">double</span> fs_delta = size_delta;</div><div class="line"></div><div class="line">  ++num_of_deltas_;</div><div class="line">  <span class="keyword">if</span> (num_of_deltas_ &gt; kDeltaCounterMax) &#123;</div><div class="line">    num_of_deltas_ = kDeltaCounterMax;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// Update the Kalman filter.</span></div><div class="line">  <span class="comment">// 误差矩阵</span></div><div class="line">  <span class="comment">// 加上协方差，为配置初始化值。</span></div><div class="line">  <span class="comment">// process_noise_ Q</span></div><div class="line">  <span class="comment">// P(k) = AP(k - 1)AT + Q</span></div><div class="line">  <span class="comment">// 预测方程2</span></div><div class="line">  <span class="comment">// 2.3</span></div><div class="line">  E_[<span class="number">0</span>][<span class="number">0</span>] += process_noise_[<span class="number">0</span>];</div><div class="line">  E_[<span class="number">1</span>][<span class="number">1</span>] += process_noise_[<span class="number">1</span>];</div><div class="line"></div><div class="line">  <span class="keyword">if</span> ((current_hypothesis == kBwOverusing &amp;&amp; offset_ &lt; prev_offset_) ||</div><div class="line">      (current_hypothesis == kBwUnderusing &amp;&amp; offset_ &gt; prev_offset_)) &#123;</div><div class="line">    E_[<span class="number">1</span>][<span class="number">1</span>] += <span class="number">10</span> * process_noise_[<span class="number">1</span>];</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// h观测矩阵</span></div><div class="line">  <span class="comment">// 2.2</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> h[<span class="number">2</span>] = &#123;fs_delta, <span class="number">1.0</span>&#125;;</div><div class="line">  <span class="comment">// P * h转置</span></div><div class="line">  <span class="comment">// 2.4</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> Eh[<span class="number">2</span>] = &#123;E_[<span class="number">0</span>][<span class="number">0</span>]*h[<span class="number">0</span>] + E_[<span class="number">0</span>][<span class="number">1</span>]*h[<span class="number">1</span>],</div><div class="line">                        E_[<span class="number">1</span>][<span class="number">0</span>]*h[<span class="number">0</span>] + E_[<span class="number">1</span>][<span class="number">1</span>]*h[<span class="number">1</span>]&#125;;</div><div class="line"></div><div class="line">  <span class="comment">// t_ts_delta 为 zk，residual为 zk - H * xk</span></div><div class="line">  <span class="comment">// 2.7 </span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> residual = t_ts_delta - slope_*h[<span class="number">0</span>] - offset_;</div><div class="line"></div><div class="line">  <span class="keyword">const</span> <span class="keyword">bool</span> in_stable_state = (current_hypothesis == kBwNormal);</div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> max_residual = <span class="number">3.0</span> * <span class="built_in">sqrt</span>(var_noise_);</div><div class="line">  <span class="comment">// We try to filter out very late frames. For instance periodic key</span></div><div class="line">  <span class="comment">// frames doesn't fit the Gaussian model well.</span></div><div class="line">  <span class="keyword">if</span> (<span class="built_in">fabs</span>(residual) &lt; max_residual) &#123;</div><div class="line">    UpdateNoiseEstimate(residual, min_frame_period, in_stable_state);</div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">    UpdateNoiseEstimate(residual &lt; <span class="number">0</span> ? -max_residual : max_residual,</div><div class="line">                        min_frame_period, in_stable_state);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// denom = h * P * ht + R，var_noise为测量噪声协方差</span></div><div class="line">  <span class="comment">// 2.5</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> denom = var_noise_ + h[<span class="number">0</span>]*Eh[<span class="number">0</span>] + h[<span class="number">1</span>]*Eh[<span class="number">1</span>];</div><div class="line"></div><div class="line">  <span class="comment">// K卡尔曼增益矩阵</span></div><div class="line">  <span class="comment">// K(k) = Eh / (HPkHT + R) </span></div><div class="line">  <span class="comment">// 校正方程3</span></div><div class="line">  <span class="comment">// 2.6</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> K[<span class="number">2</span>] = &#123;Eh[<span class="number">0</span>] / denom,</div><div class="line">                       Eh[<span class="number">1</span>] / denom&#125;;</div><div class="line"></div><div class="line">  <span class="comment">// Ikh I-Kh</span></div><div class="line">  <span class="comment">// 2.9</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> IKh[<span class="number">2</span>][<span class="number">2</span>] = &#123;&#123;<span class="number">1.0</span> - K[<span class="number">0</span>]*h[<span class="number">0</span>], -K[<span class="number">0</span>]*h[<span class="number">1</span>]&#125;,</div><div class="line">                            &#123;-K[<span class="number">1</span>]*h[<span class="number">0</span>], <span class="number">1.0</span> - K[<span class="number">1</span>]*h[<span class="number">1</span>]&#125;&#125;;</div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> e00 = E_[<span class="number">0</span>][<span class="number">0</span>];</div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> e01 = E_[<span class="number">0</span>][<span class="number">1</span>];</div><div class="line"></div><div class="line">  <span class="comment">// Update state.</span></div><div class="line">  <span class="comment">// 使用IKh更新误差矩阵</span></div><div class="line">  <span class="comment">// P(k) = (I - Kh)P(k - 1)</span></div><div class="line">  <span class="comment">// 校准方程5</span></div><div class="line">  <span class="comment">// 2.10</span></div><div class="line">  E_[<span class="number">0</span>][<span class="number">0</span>] = e00 * IKh[<span class="number">0</span>][<span class="number">0</span>] + E_[<span class="number">1</span>][<span class="number">0</span>] * IKh[<span class="number">0</span>][<span class="number">1</span>];</div><div class="line">  E_[<span class="number">0</span>][<span class="number">1</span>] = e01 * IKh[<span class="number">0</span>][<span class="number">0</span>] + E_[<span class="number">1</span>][<span class="number">1</span>] * IKh[<span class="number">0</span>][<span class="number">1</span>];</div><div class="line">  E_[<span class="number">1</span>][<span class="number">0</span>] = e00 * IKh[<span class="number">1</span>][<span class="number">0</span>] + E_[<span class="number">1</span>][<span class="number">0</span>] * IKh[<span class="number">1</span>][<span class="number">1</span>];</div><div class="line">  E_[<span class="number">1</span>][<span class="number">1</span>] = e01 * IKh[<span class="number">1</span>][<span class="number">0</span>] + E_[<span class="number">1</span>][<span class="number">1</span>] * IKh[<span class="number">1</span>][<span class="number">1</span>];</div><div class="line"></div><div class="line">  <span class="comment">// The covariance matrix must be positive semi-definite.</span></div><div class="line">  <span class="keyword">bool</span> positive_semi_definite = E_[<span class="number">0</span>][<span class="number">0</span>] + E_[<span class="number">1</span>][<span class="number">1</span>] &gt;= <span class="number">0</span> &amp;&amp;</div><div class="line">      E_[<span class="number">0</span>][<span class="number">0</span>] * E_[<span class="number">1</span>][<span class="number">1</span>] - E_[<span class="number">0</span>][<span class="number">1</span>] * E_[<span class="number">1</span>][<span class="number">0</span>] &gt;= <span class="number">0</span> &amp;&amp; E_[<span class="number">0</span>][<span class="number">0</span>] &gt;= <span class="number">0</span>;</div><div class="line">  assert(positive_semi_definite);</div><div class="line">  <span class="keyword">if</span> (!positive_semi_definite) &#123;</div><div class="line">    LOG(LS_ERROR) &lt;&lt; <span class="string">"The over-use estimator's covariance matrix is no longer "</span></div><div class="line">                     <span class="string">"semi-definite."</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// 2.8</span></div><div class="line">  slope_ = slope_ + K[<span class="number">0</span>] * residual;</div><div class="line">  prev_offset_ = offset_;</div><div class="line">  offset_ = offset_ + K[<span class="number">1</span>] * residual;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="2-2-噪声更新"><a href="#2-2-噪声更新" class="headerlink" title="2.2 噪声更新"></a>2.2 噪声更新</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 这个函数主要提供下面函数需要用到的ts_delta，这里不是直接使用</span></div><div class="line"><span class="comment">// 本次的ts_delta，而是根据历史时间窗口中最小时间值作为噪声估计中的ts_delta</span></div><div class="line"><span class="comment">// 这个函数就是在一个固定的时间窗口中按时间顺序存放每一个ts_delta</span></div><div class="line"><span class="comment">// 当数量超过时就从最早的时间开始pop</span></div><div class="line"><span class="comment">// 然后遍历整个时间窗口选择最小的时间差值。</span></div><div class="line"><span class="keyword">double</span> OveruseEstimator::UpdateMinFramePeriod(<span class="keyword">double</span> ts_delta) &#123;</div><div class="line">  <span class="keyword">double</span> min_frame_period = ts_delta;</div><div class="line">  <span class="keyword">if</span> (ts_delta_hist_.size() &gt;= kMinFramePeriodHistoryLength) &#123;</div><div class="line">    ts_delta_hist_.pop_front();</div><div class="line">  &#125;</div><div class="line">  <span class="built_in">std</span>::<span class="built_in">list</span>&lt;<span class="keyword">double</span>&gt;::iterator it = ts_delta_hist_.begin();</div><div class="line">  <span class="keyword">for</span> (; it != ts_delta_hist_.end(); it++) &#123;</div><div class="line">    min_frame_period = <span class="built_in">std</span>::min(*it, min_frame_period);</div><div class="line">  &#125;</div><div class="line">  ts_delta_hist_.push_back(ts_delta);</div><div class="line">  <span class="keyword">return</span> min_frame_period;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">void</span> OveruseEstimator::UpdateNoiseEstimate(<span class="keyword">double</span> residual,</div><div class="line">                                           <span class="keyword">double</span> ts_delta,</div><div class="line">                                           <span class="keyword">bool</span> stable_state) &#123;</div><div class="line">  <span class="comment">// 仅在Normal状态下更新噪声值。</span></div><div class="line">  <span class="keyword">if</span> (!stable_state) &#123;</div><div class="line">    <span class="keyword">return</span>;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// Faster filter during startup to faster adapt to the jitter level</span></div><div class="line">  <span class="comment">// of the network. |alpha| is tuned for 30 frames per second, but is scaled</span></div><div class="line">  <span class="comment">// according to |ts_delta|.</span></div><div class="line">  <span class="keyword">double</span> alpha = <span class="number">0.01</span>;</div><div class="line">  <span class="keyword">if</span> (num_of_deltas_ &gt; <span class="number">10</span>*<span class="number">30</span>) &#123;</div><div class="line">    alpha = <span class="number">0.002</span>;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// Only update the noise estimate if we're not over-using. |beta| is a</span></div><div class="line">  <span class="comment">// function of alpha and the time delta since the previous update.</span></div><div class="line">  <span class="comment">// 时间差越大，残差的比重越小</span></div><div class="line">  <span class="comment">// 由于上面函数控制一个时间窗口，因此一个时间窗口内，其权重基本固定。</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">double</span> beta = <span class="built_in">pow</span>(<span class="number">1</span> - alpha, ts_delta * <span class="number">30.0</span> / <span class="number">1000.0</span>);</div><div class="line">  <span class="comment">// 更新均值</span></div><div class="line">  avg_noise_ = beta * avg_noise_</div><div class="line">              + (<span class="number">1</span> - beta) * residual;</div><div class="line">  <span class="comment">// 利用方差更新噪声值。</span></div><div class="line">  var_noise_ = beta * var_noise_</div><div class="line">              + (<span class="number">1</span> - beta) * (avg_noise_ - residual) * (avg_noise_ - residual);</div><div class="line">  <span class="keyword">if</span> (var_noise_ &lt; <span class="number">1</span>) &#123;</div><div class="line">    var_noise_ = <span class="number">1</span>;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p>[1] <a href="http://www.cnblogs.com/jcchen1987/p/4371439.html" target="_blank" rel="external">卡尔曼滤波简介</a></p>
 
-        <div class="article-info info-on-right">
-          
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -198,395 +236,92 @@
 		</ul>
 	</div>
 
-          
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="http://s.jiathis.com/qrcode.php?url=http://yoursite.com/2017/05/22/Webrtc-delay-base-bwe代码分析-3-OveruseEstimator模块/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-2-InterArrival模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:28:31.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
+<nav id="article-nav">
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-2-InterArrival模块/">Webrtc delay-base-bwe代码分析(2): InterArrival模块</a>
-    </h1>
+  
+    <a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-2-InterArrival模块/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Webrtc delay-base-bwe代码分析(2): InterArrival模块</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+
+
+
+
+  
+    <div class="duoshuo"></div>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
 
-          
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/" class="archive-article-date">
-  	<time datetime="2017-05-22T11:18:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-22</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/22/Webrtc-delay-base-bwe代码分析-1-RateStatistics模块/">Webrtc delay-base-bwe代码分析(1): RateStatistics模块</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">webrtc</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/05/09/webrtc中rtcp码率控制分析/" class="archive-article-date">
-  	<time datetime="2017-05-09T03:22:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/05/09/webrtc中rtcp码率控制分析/">webrtc中rtcp码率控制分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">webrt</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/04/11/TCP的FRTO分析/" class="archive-article-date">
-  	<time datetime="2017-04-11T11:04:12.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-04-11</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/04/11/TCP的FRTO分析/">TCP的FRTO分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/04/06/hello-world/" class="archive-article-date">
-  	<time datetime="2017-04-06T13:56:41.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-04-06</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/04/06/hello-world/">小怼的世界</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/04/02/QUIC翻译/" class="archive-article-date">
-  	<time datetime="2017-04-02T02:57:50.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-04-02</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/04/02/QUIC翻译/">QUIC翻译</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">QUIC</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">传输协议</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/03/27/linux内核慢启动拥塞避免代码分析/" class="archive-article-date">
-  	<time datetime="2017-03-27T02:27:29.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-27</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/03/27/linux内核慢启动拥塞避免代码分析/">linux内核慢启动拥塞避免代码分析</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/03/19/TCP简介-读书笔记/" class="archive-article-date">
-  	<time datetime="2017-03-19T12:00:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-19</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/03/19/TCP简介-读书笔记/">TCP简介-读书笔记</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">TCP</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">拥塞控制</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">读书笔记</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/03/19/九层妖塔/" class="archive-article-date">
-  	<time datetime="2017-03-19T11:18:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-03-19</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/03/19/九层妖塔/">九层妖塔</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">涛哥说的都怼</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">fun</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
-
+<span id="busuanzi_container_page_pv">
+   本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+</span>
 
           </div>
         </div>
@@ -613,8 +348,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
